@@ -4,7 +4,6 @@ from colorama import Back, Style
 from prettytable import PrettyTable
 from requests import Session
 
-# TODO: change this before uploading to GitHub
 cmc_api_key = 'CHANGE THIS TO YOUR CMC API KEY'
 headers = {
   'Accepts': 'application/json',
@@ -73,7 +72,6 @@ def populate_rankings_table(parameters, currencies, table):
         ticker = currency['symbol']
         price = round(float(quotes['price']), 3)
 
-        # TODO: shorten this
         if (quotes['volume_24h']) is None:
             volume = 0
         else:
@@ -91,7 +89,7 @@ def populate_rankings_table(parameters, currencies, table):
         else:
             hour_change = round(quotes['percent_change_1h'], 2)
 
-            if hour_change > 0:
+            if hour_change >= 0:
                 hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
             else:
                 hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
@@ -101,7 +99,7 @@ def populate_rankings_table(parameters, currencies, table):
         else:
             day_change = round(quotes['percent_change_24h'], 2)
 
-            if day_change > 0:
+            if day_change >= 0:
                 day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
             else:
                 day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
@@ -111,7 +109,7 @@ def populate_rankings_table(parameters, currencies, table):
         else:
             week_change = round(quotes['percent_change_7d'], 2)
 
-            if week_change > 0:
+            if week_change >= 0:
                 week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
             else:
                 week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
@@ -130,6 +128,8 @@ def populate_rankings_table(parameters, currencies, table):
 
 def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
     """Insert rows into portfolio table for selected currencies."""
+    portfolio_value = 0.00
+
     for currency, number_of_coins in zip(currencies, amount_owned):
         quotes = currency['quote'][parameters['convert']]
         name = currency['name']
@@ -141,7 +141,7 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
         else:
             hour_change = round(quotes['percent_change_1h'], 2)
 
-            if hour_change > 0:
+            if hour_change >= 0:
                 hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
             else:
                 hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
@@ -151,7 +151,7 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
         else:
             day_change = round(quotes['percent_change_24h'], 2)
 
-            if day_change > 0:
+            if day_change >= 0:
                 day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
             else:
                 day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
@@ -161,7 +161,7 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
         else:
             week_change = round(quotes['percent_change_7d'], 2)
 
-            if week_change > 0:
+            if week_change >= 0:
                 week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
             else:
                 week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
@@ -169,6 +169,8 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
         amount_owned = coin_holdings.get(number_of_coins)
         value = float(price) * float(amount_owned)
         value_string = '{:,}'.format(round(value, 2))
+        portfolio_value += value
+        portfolio_value_string = '{:,}'.format(round(portfolio_value, 2))
         table.add_row([name + ' (' + ticker + ')',
                        amount_owned,
                        value_string,
@@ -177,7 +179,8 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
                        str(day_change),
                        str(week_change)
                        ])
-    return table
+    print(portfolio_value_string)
+    return table, portfolio_value_string
 
 
 def prompt_user(input):
@@ -229,8 +232,6 @@ while True:
     if user_choice == '4':
         list_of_coins = []
         amounts_owned = []
-        portfolio_value = 0.00
-        last_updated = 0
 
         while True:
 
@@ -253,9 +254,10 @@ while True:
                                        'Hourly Change',
                                        'Daily Change',
                                        'Weekly Change'])
-        print(populate_portfolio_table(coin, parameters_returned, currencies_returned, portfolio_table, coin_holdings))
-        portfolio_value_string = '{:,}'.format(round(portfolio_value, 2))
-        print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value_string + Style.RESET_ALL)  # TODO: make this work
+        portfolio_table, portfolio_value = populate_portfolio_table(coin, parameters_returned, currencies_returned,
+                                                                    portfolio_table, coin_holdings)
+        print(portfolio_table)
+        print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
 
     if user_choice == '5':
         convert = input('Enter currency ticker: ')  # TODO: add full CMC ISO 8601 currency support
