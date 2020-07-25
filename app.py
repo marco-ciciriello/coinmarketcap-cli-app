@@ -4,199 +4,87 @@ from colorama import Back, Style
 from prettytable import PrettyTable
 from requests import Session
 
-
-def prompt_user(input):
-    """Ask user if they wish to make another menu selection."""
-    valid = ['y', 'n']
-    new_selection = input('Make another selection? (y/n): ').lower().strip()
-
-    if new_selection == 'n':
-        exit()
-    elif new_selection not in valid:
-        print()
-        print('Please enter a valid input (y/n)')
-        print()
-        prompt_user(input)
+# TODO: change this before uploading to GitHub
+cmc_api_key = 'CHANGE THIS TO YOUR CMC API KEY'
+headers = {
+  'Accepts': 'application/json',
+  'X-CMC_PRO_API_KEY': cmc_api_key,
+}
+convert = 'GBP'
 
 
-def user_portfolio():
-    """Create portfolio table showing holdings and performance."""
-    portfolio_listings_url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-    parameters = {
-      'symbol': '',
-      'convert': 'GBP',
-    }
-    headers = {
-      'Accepts': 'application/json',
-      'X-CMC_PRO_API_KEY': 'CHANGE THIS TO YOUR CMC API KEY',
-    }
-
-    session = Session()
-    session.headers.update(headers)
-
-    list_of_coins = []
-    amounts_owned = []
-    coin_holdings = dict(zip(list_of_coins, amounts_owned))
-
-    while True:
-
-        coin_entry = input('Enter coin ticker (q to quit): ')
-
-        if coin_entry.lower() == 'q':
-            break
-
-        list_of_coins.append(coin_entry)
-
-        amount_entry = input('Enter number of coins owned: ')
-
-        if amount_entry.lower() == 'q':
-            break
-
-        amounts_owned.append(amount_entry)
-
-    coin_holdings = dict(zip(list_of_coins, amounts_owned))
-    portfolio_value = 0.00
-    last_updated = 0
-    portfolio_table = PrettyTable(['Asset', 'Amount Owned',
-                                   'Value (' + parameters['convert'] + ')',
-                                   'Price (' + parameters['convert'] + ')',
-                                   'Hourly Change', 'Daily Change',
-                                   'Weekly Change'])
-
-    for coin in list_of_coins:
-        parameters['symbol'] = list_of_coins[list_of_coins.index(coin)]
-        response = session.get(portfolio_listings_url, params=parameters)
-        data = json.loads(response.text)
-
-        currency = data['data'][parameters['symbol']]
-        quotes = currency['quote'][parameters['convert']]
-        name = currency['name']
-        ticker = currency['symbol']
-        last_updated = currency['last_updated']
-        amount_owned = coin_holdings.get(coin)
-        price = round(float(quotes['price']), 3)
-        value = float(price) * float(amount_owned)
-        hour_change = round(quotes['percent_change_1h'], 2)
-        day_change = round(quotes['percent_change_24h'], 2)
-        week_change = round(quotes['percent_change_7d'], 2)
-
-        if hour_change is not None:
-            if hour_change > 0:
-                hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
-            else:
-                hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
-
-        if day_change is not None:
-            if day_change > 0:
-                day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
-            else:
-                day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
-
-        if week_change is not None:
-            if week_change > 0:
-                week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
-            else:
-                week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
-
-        portfolio_value += value
-        value_string = '{:,}'.format(round(value, 2))
-
-        portfolio_table.add_row([name + ' (' + ticker + ')',
-                                 amount_owned,
-                                 value_string,
-                                 str(price),
-                                 str(hour_change),
-                                 str(day_change),
-                                 str(week_change)
-                                 ])
-
-    print(portfolio_table)
-    print()
-
-    portfolio_value_string = '{:,}'.format(round(portfolio_value, 2))
-    # last_updated_string = datetime.fromtimestamp(last_updated).strftime('%B %d, %Y at %I:%M%p')  TODO: Fix this
-
-    print('Total Portfolio Value (' + parameters['convert'] + '): ' + Back.GREEN + portfolio_value_string +
-          Style.RESET_ALL)
-    print('Last Updated: ' + last_updated)  # TODO: Make this more readable
-
-
-while True:
-
-    listings_url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+def rankings_api_call(selection):
+    """Make API call for rankings options using /v1/cryptocurrency/listings/latest endpoint."""
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
     parameters = {
       'start': 1,
       'limit': 100,
-      'convert': 'GBP',
+      'convert': convert,
       'sort': 'market_cap',
     }
-    headers = {
-      'Accepts': 'application/json',
-      # TODO: Change this before uploading to GitHub
-      'X-CMC_PRO_API_KEY': 'CHANGE THIS TO YOUR CMC API KEY',
-    }
+
+    if selection == '1':
+        parameters['sort'] = 'market_cap'
+
+    if selection == '2':
+        parameters['sort'] = 'percent_change_24h'
+
+    if selection == '3':
+        parameters['sort'] = 'volume_24h'
+
+    if selection == '5':
+        parameters['convert'] = input('Enter currency ticker: ')  # TODO: add full CMC ISO 8601 currency support
 
     session = Session()
     session.headers.update(headers)
-
-    print()
-    print('CoinMarketCap API Explorer')
-    print()
-    print('1 - View my portfolio')  # TODO: If csv exists, import from there, else prompt user to enter - CREATE EXPORT TO CSV FUNCTIONALITY
-    print('2 - Top 100 by market cap')
-    print('3 - Top 100 by 24 hour price change')
-    print('4 - Top 100 by 24 hour volume')
-    print('5 - Change currency')
-    print('0 - Exit')
-    print()
-
-    user_choice = input('Select an option: ')
-    valid_choices = ['1', '2', '3', '4', '5', '0']
-
-    if user_choice not in valid_choices:
-        user_choice = input('Select a valid option (0-5): ')
-
-    if user_choice == '1':
-        user_portfolio()
-
-    if user_choice == '2':
-        parameters['sort'] = 'market_cap'
-
-    if user_choice == '3':
-        parameters['sort'] = 'percent_change_24h'
-
-    if user_choice == '4':
-        parameters['sort'] = 'volume_24h'
-
-    if user_choice == '5':
-        parameters['convert'] = input('Enter currency ticker: ')  # TODO: Add full CMC ISO 8601 currency support
-
-    if user_choice == '0':
-        break
-
-    response = session.get(listings_url, params=parameters)
+    response = session.get(url, params=parameters)
     data = json.loads(response.text)
     currencies = data['data']
+    return parameters, currencies
 
-    rankings_table = PrettyTable(['Rank', 'Asset', 'Price (' + parameters['convert'] + ')',
-                                  'Market Cap (' + parameters['convert'] + ')',
-                                  'Volume (' + parameters['convert'] + ')',
-                                  'Hourly Change', 'Daily Change', 'Weekly Change'])
 
-    print()
+def portfolio_api_call(list_of_coins):
+    """Make API call for individual coins using /v1/cryptocurrency/quotes/latest endpoint."""
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+    parameters = {
+      'symbol': '',
+      'convert': convert,
+    }
+    session = Session()
+    session.headers.update(headers)
+    currencies_data = []
 
+    for coin in list_of_coins:
+        parameters['symbol'] = list_of_coins[list_of_coins.index(coin)]
+        response = session.get(url, params=parameters)
+        data = json.loads(response.text)
+        currency = data['data'][parameters['symbol']]
+        currencies_data.append(currency)
+
+    return coin, parameters, currencies_data
+
+
+def populate_rankings_table(parameters, currencies, table):
+    """Insert rows into rankings table for returned currencies."""
     for currency in currencies:
+        quotes = currency['quote'][parameters['convert']]
         rank = currency['cmc_rank']
         name = currency['name']
         ticker = currency['symbol']
-        quotes = currency['quote'][parameters['convert']]
         price = round(float(quotes['price']), 3)
-        volume = int(quotes['volume_24h'])
+
+        # TODO: shorten this
+        if (quotes['volume_24h']) is None:
+            volume = 0
+        else:
+            volume = int(quotes['volume_24h'])
+        volume_string = '{:,}'.format(volume)
 
         if quotes['market_cap'] is None:
             market_cap = 0
         else:
             market_cap = int(quotes['market_cap'])
+        market_cap_string = '{:,}'.format(market_cap)
 
         if quotes['percent_change_1h'] is None:
             hour_change = 0
@@ -228,24 +116,151 @@ while True:
             else:
                 week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
 
-        if volume is not None:
-            volume_string = '{:,}'.format(volume)
+        table.add_row([rank,
+                       name + ' (' + ticker + ')',
+                       str(price),
+                       market_cap_string,
+                       volume_string,
+                       str(hour_change),
+                       str(day_change),
+                       str(week_change)
+                       ])
+    return table
 
-        if market_cap is not None:
-            market_cap_string = '{:,}'.format(market_cap)
 
-        rankings_table.add_row([rank,
-                                name + ' (' + ticker + ')',
-                                str(price),
-                                market_cap_string,
-                                volume_string,
-                                str(hour_change),
-                                str(day_change),
-                                str(week_change)])
+def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
+    """Insert rows into portfolio table for selected currencies."""
+    for currency, number_of_coins in zip(currencies, amount_owned):
+        quotes = currency['quote'][parameters['convert']]
+        name = currency['name']
+        ticker = currency['symbol']
+        price = round(float(quotes['price']), 3)
 
-    if 2 <= int(user_choice) < 6:
+        if quotes['percent_change_1h'] is None:
+            hour_change = 0
+        else:
+            hour_change = round(quotes['percent_change_1h'], 2)
+
+            if hour_change > 0:
+                hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
+            else:
+                hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
+
+        if quotes['percent_change_24h'] is None:
+            day_change = 0
+        else:
+            day_change = round(quotes['percent_change_24h'], 2)
+
+            if day_change > 0:
+                day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
+            else:
+                day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
+
+        if quotes['percent_change_7d'] is None:
+            week_change = 0
+        else:
+            week_change = round(quotes['percent_change_7d'], 2)
+
+            if week_change > 0:
+                week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
+            else:
+                week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
+
+        amount_owned = coin_holdings.get(number_of_coins)
+        value = float(price) * float(amount_owned)
+        value_string = '{:,}'.format(round(value, 2))
+        table.add_row([name + ' (' + ticker + ')',
+                       amount_owned,
+                       value_string,
+                       str(price),
+                       str(hour_change),
+                       str(day_change),
+                       str(week_change)
+                       ])
+    return table
+
+
+def prompt_user(input):
+    """Ask user if they wish to make another menu selection."""
+    valid = ['y', 'n']
+    new_selection = input('Make another selection? (y/n): ').lower().strip()
+
+    if new_selection == 'n':
+        exit()
+    elif new_selection not in valid:
         print()
-        print(rankings_table)
+        print('Please enter a valid input (y/n)')
         print()
+        prompt_user(input)
+
+
+# MAIN PROGRAM START
+while True:
+    print()
+    print('CoinMarketCap API Explorer')
+    print()
+    print('1 - Top 100 by market cap')
+    print('2 - Top 100 by 24 hour price change')
+    print('3 - Top 100 by 24 hour volume')
+    print('4 - My portfolio')  # TODO: ask if user wants to create fresh pf or import from csv + create export to csv functionality
+    print('5 - Change currency')
+    print('0 - Exit')
+    print()
+
+    user_choice = input('Select an option: ').strip()
+    valid_choices = ['1', '2', '3', '4', '5', '0']
+    rankings_choices = ['1', '2', '3']
+
+    if user_choice not in valid_choices:
+        user_choice = input('Select a valid option (0-5): ').strip()
+
+    if user_choice in rankings_choices:
+        parameters_returned, currencies_returned = rankings_api_call(user_choice)
+        rankings_table = PrettyTable(['Rank',
+                                      'Asset',
+                                      'Price (' + parameters_returned['convert'] + ')',
+                                      'Market Cap (' + parameters_returned['convert'] + ')',
+                                      'Volume (' + parameters_returned['convert'] + ')',
+                                      'Hourly Change',
+                                      'Daily Change',
+                                      'Weekly Change'])
+        print(populate_rankings_table(parameters_returned, currencies_returned, rankings_table))
+
+    if user_choice == '4':
+        list_of_coins = []
+        amounts_owned = []
+        portfolio_value = 0.00
+        last_updated = 0
+
+        while True:
+
+            coin_entry = input('Enter coin ticker (q to quit): ').upper()
+
+            if coin_entry.lower() == 'q':
+                break
+
+            list_of_coins.append(coin_entry)
+            amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for amount input
+            amounts_owned.append(amount_entry)
+
+        coin_holdings = dict(zip(list_of_coins, amounts_owned))
+        portfolio_api_call(list_of_coins)
+        coin, parameters_returned, currencies_returned = portfolio_api_call(list_of_coins)
+        portfolio_table = PrettyTable(['Asset',
+                                       'Amount Owned',
+                                       'Value (' + parameters_returned['convert'] + ')',
+                                       'Price (' + parameters_returned['convert'] + ')',
+                                       'Hourly Change',
+                                       'Daily Change',
+                                       'Weekly Change'])
+        print(populate_portfolio_table(coin, parameters_returned, currencies_returned, portfolio_table, coin_holdings))
+        portfolio_value_string = '{:,}'.format(round(portfolio_value, 2))
+        print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value_string + Style.RESET_ALL)  # TODO: make this work
+
+    if user_choice == '5':
+        convert = input('Enter currency ticker: ')  # TODO: add full CMC ISO 8601 currency support
+
+    if user_choice == '0':
+        break
 
     prompt_user(input)
