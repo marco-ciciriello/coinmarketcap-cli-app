@@ -1,3 +1,4 @@
+import csv
 import json
 
 from colorama import Back, Style
@@ -179,7 +180,6 @@ def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
                        str(day_change),
                        str(week_change)
                        ])
-    print(portfolio_value_string)
     return table, portfolio_value_string
 
 
@@ -230,21 +230,39 @@ while True:
         print(populate_rankings_table(parameters_returned, currencies_returned, rankings_table))
 
     if user_choice == '4':
-        list_of_coins = []
-        amounts_owned = []
 
-        while True:
+        read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
 
-            coin_entry = input('Enter coin ticker (q to quit): ').upper()
+        if read_from_csv == 'y':
+            with open(coin_holdings.csv, 'r') as coin_holdings_csv:
+                l = list(csv.reader(coin_holdings_csv))
+                coin_holdings = {i[0]: [float(x) for x in i[1:]] for i in zip(*l)}
+                print(coin_holdings)
 
-            if coin_entry.lower() == 'q':
-                break
+        if read_from_csv == 'n':
+            list_of_coins = []
+            amounts_owned = []
 
-            list_of_coins.append(coin_entry)
-            amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for amount input
-            amounts_owned.append(amount_entry)
+            while True:
 
-        coin_holdings = dict(zip(list_of_coins, amounts_owned))
+                coin_entry = input('Enter coin ticker (q to quit): ').upper()
+
+                if coin_entry.lower() == 'q':
+                    break
+
+                list_of_coins.append(coin_entry)
+                amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for amount input
+                amounts_owned.append(amount_entry)
+
+            coin_holdings = dict(zip(list_of_coins, amounts_owned))
+
+            with open('coin_holdings.csv', 'w') as csv_file:
+                writer = csv.writer(csv_file)
+                for key, value in coin_holdings.items():
+                    writer.writerow([key, value])
+            print('Saving to coin_holdings.csv...')
+            csv_file.close()
+
         portfolio_api_call(list_of_coins)
         coin, parameters_returned, currencies_returned = portfolio_api_call(list_of_coins)
         portfolio_table = PrettyTable(['Asset',
