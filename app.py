@@ -230,21 +230,26 @@ while True:
         print(populate_rankings_table(parameters_returned, currencies_returned, rankings_table))
 
     if user_choice == '4':
-
+        list_of_coins = []
+        amounts_owned = []
         read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
 
+        # TODO: handle for if CSV is empty or in wrong format
         if read_from_csv == 'y':
-            with open(coin_holdings.csv, 'r') as coin_holdings_csv:
-                l = list(csv.reader(coin_holdings_csv))
-                coin_holdings = {i[0]: [float(x) for x in i[1:]] for i in zip(*l)}
-                print(coin_holdings)
+            with open('coin_holdings.csv', 'r') as csv_file:
+                lines = csv_file.readlines()
+
+                for line in lines:
+                    data = line.split(',')
+                    data[0] = data[0].upper()
+                    data[1] = data[1].strip()
+                    list_of_coins.append(data[0])
+                    amounts_owned.append(data[1])
+
+            csv_file.close()
 
         if read_from_csv == 'n':
-            list_of_coins = []
-            amounts_owned = []
-
             while True:
-
                 coin_entry = input('Enter coin ticker (q to quit): ').upper()
 
                 if coin_entry.lower() == 'q':
@@ -254,15 +259,14 @@ while True:
                 amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for amount input
                 amounts_owned.append(amount_entry)
 
-            coin_holdings = dict(zip(list_of_coins, amounts_owned))
-
             with open('coin_holdings.csv', 'w') as csv_file:
                 writer = csv.writer(csv_file)
-                for key, value in coin_holdings.items():
-                    writer.writerow([key, value])
+                writer.writerows(zip(list_of_coins, amounts_owned))
             print('Saving to coin_holdings.csv...')
+            print()
             csv_file.close()
 
+        coin_holdings = dict(zip(list_of_coins, amounts_owned))
         portfolio_api_call(list_of_coins)
         coin, parameters_returned, currencies_returned = portfolio_api_call(list_of_coins)
         portfolio_table = PrettyTable(['Asset',
