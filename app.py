@@ -1,11 +1,14 @@
 import csv
 import json
+import os
 
 from colorama import Back, Style
+from dotenv import load_dotenv
 from prettytable import PrettyTable
 from requests import Session
 
-cmc_api_key = 'CHANGE THIS TO YOUR CMC API KEY'
+load_dotenv()
+cmc_api_key = os.getenv('API_KEY')
 headers = {
   'Accepts': 'application/json',
   'X-CMC_PRO_API_KEY': cmc_api_key,
@@ -276,8 +279,7 @@ while True:
                                        'Hourly Change',
                                        'Daily Change',
                                        'Weekly Change'])
-        portfolio_table, portfolio_value = populate_portfolio_table(coin, parameters_returned, currencies_returned,
-                                                                    portfolio_table, coin_holdings)
+        portfolio_table, portfolio_value = populate_portfolio_table(coin, parameters_returned, currencies_returned, portfolio_table, coin_holdings)
         print(portfolio_table)
         print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
 

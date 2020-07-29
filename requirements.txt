@@ -3,5 +3,6 @@ chardet==3.0.4
 colorama==0.4.3
 idna==2.10
 prettytable==0.7.2
+python-dotenv==0.14.0
 requests==2.24.0
 urllib3==1.25.10
