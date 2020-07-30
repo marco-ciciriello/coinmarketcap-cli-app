@@ -130,7 +130,7 @@ def populate_rankings_table(parameters, currencies, table):
     return table
 
 
-def populate_portfolio_table(coin, parameters, currencies, table, amount_owned):
+def populate_portfolio_table(parameters, currencies, table, amount_owned):
     """Insert rows into portfolio table for selected currencies."""
     portfolio_value = 0.00
 
@@ -279,7 +279,8 @@ while True:
                                        'Hourly Change',
                                        'Daily Change',
                                        'Weekly Change'])
-        portfolio_table, portfolio_value = populate_portfolio_table(coin, parameters_returned, currencies_returned, portfolio_table, coin_holdings)
+        portfolio_table, portfolio_value = populate_portfolio_table(parameters_returned, currencies_returned,
+                                                                    portfolio_table, coin_holdings)
         print(portfolio_table)
         print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
 
