@@ -16,6 +16,21 @@ headers = {
 convert = 'GBP'
 
 
+def coin_list_api_call():
+    """Make API call to retrieve list of all active coins using /v1/cryptocurrency/map endpoint."""
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map'
+    parameters = {
+        'listing_status': 'active',
+        'sort': 'id',
+    }
+    session = Session()
+    session.headers.update(headers)
+    response = session.get(url, params=parameters)
+    data = json.loads(response.text)
+    coin_symbols = ([d['symbol'] for d in data['data']])
+    return coin_symbols
+
+
 def rankings_api_call(selection):
     """Make API call for rankings options using /v1/cryptocurrency/listings/latest endpoint."""
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
@@ -186,6 +201,26 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
     return table, portfolio_value_string
 
 
+def input_portfolio():
+    returned_tickers = coin_list_api_call()
+
+    while True:
+        user_ticker_entry = input('Enter coin ticker (q to quit): ').upper()
+
+        if user_ticker_entry.lower() == 'q':
+            break
+
+        if user_ticker_entry not in returned_tickers:
+            while user_ticker_entry not in returned_tickers:
+                user_ticker_entry = input('Enter a valid coin ticker (q to quit): ').upper()
+
+        list_of_coins.append(user_ticker_entry)
+        amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for numerical amount input - delete last coin entry if amount = q
+        amounts_owned.append(amount_entry)
+
+    return list_of_coins, amounts_owned
+
+
 def prompt_user(input):
     """Ask user if they wish to make another menu selection."""
     valid = ['y', 'n']
@@ -252,15 +287,7 @@ while True:
             csv_file.close()
 
         if read_from_csv == 'n':
-            while True:
-                coin_entry = input('Enter coin ticker (q to quit): ').upper()
-
-                if coin_entry.lower() == 'q':
-                    break
-
-                list_of_coins.append(coin_entry)
-                amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for amount input
-                amounts_owned.append(amount_entry)
+            list_of_coins, amounts_owned = input_portfolio()
 
             with open('coin_holdings.csv', 'w') as csv_file:
                 writer = csv.writer(csv_file)
