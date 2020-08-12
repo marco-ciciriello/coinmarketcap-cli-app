@@ -215,8 +215,20 @@ def input_portfolio():
                 user_ticker_entry = input('Enter a valid coin ticker (q to quit): ').upper()
 
         list_of_coins.append(user_ticker_entry)
-        amount_entry = input('Enter number of coins owned (q to quit): ')  # TODO: add validation to check for numerical amount input - delete last coin entry if amount = q
-        amounts_owned.append(amount_entry)
+
+        # TODO: delete last coin entry if amount = q
+        while True:
+            coin_amount_entry = input('Enter number of coins owned (q to quit): ')
+            try:
+                val = float(coin_amount_entry)
+                if val < 0:
+                    print("Enter a positive number")
+                    continue
+                break
+            except ValueError:
+                print("Invalid entry. Enter a positive number")
+
+        amounts_owned.append(coin_amount_entry)
 
     return list_of_coins, amounts_owned
 
@@ -272,7 +284,7 @@ while True:
         amounts_owned = []
         read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
 
-        # TODO: handle for if CSV is empty or in wrong format
+        # TODO: handle for if CSV is empty or in wrong format + add validation for if not in y/n
         if read_from_csv == 'y':
             with open('coin_holdings.csv', 'r') as csv_file:
                 lines = csv_file.readlines()
