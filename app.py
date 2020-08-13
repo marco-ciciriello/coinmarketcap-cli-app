@@ -41,9 +41,6 @@ def rankings_api_call(selection):
       'sort': 'market_cap',
     }
 
-    if selection == '1':
-        parameters['sort'] = 'market_cap'
-
     if selection == '2':
         parameters['sort'] = 'percent_change_24h'
 
@@ -103,11 +100,11 @@ def populate_rankings_table(parameters, currencies, table):
             market_cap = int(quotes['market_cap'])
         market_cap_string = '{:,}'.format(market_cap)
 
+        # TODO: move this code into a separate function and call function here
         if quotes['percent_change_1h'] is None:
             hour_change = 0
         else:
             hour_change = round(quotes['percent_change_1h'], 2)
-
             if hour_change >= 0:
                 hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
             else:
@@ -117,7 +114,6 @@ def populate_rankings_table(parameters, currencies, table):
             day_change = 0
         else:
             day_change = round(quotes['percent_change_24h'], 2)
-
             if day_change >= 0:
                 day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
             else:
@@ -127,7 +123,6 @@ def populate_rankings_table(parameters, currencies, table):
             week_change = 0
         else:
             week_change = round(quotes['percent_change_7d'], 2)
-
             if week_change >= 0:
                 week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
             else:
@@ -155,11 +150,11 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
         ticker = currency['symbol']
         price = round(float(quotes['price']), 3)
 
+        # TODO: move this code into a separate function and call function here
         if quotes['percent_change_1h'] is None:
             hour_change = 0
         else:
             hour_change = round(quotes['percent_change_1h'], 2)
-
             if hour_change >= 0:
                 hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
             else:
@@ -169,7 +164,6 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
             day_change = 0
         else:
             day_change = round(quotes['percent_change_24h'], 2)
-
             if day_change >= 0:
                 day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
             else:
@@ -179,7 +173,6 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
             week_change = 0
         else:
             week_change = round(quotes['percent_change_7d'], 2)
-
             if week_change >= 0:
                 week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
             else:
@@ -202,6 +195,7 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
 
 
 def input_portfolio():
+    """Accept user input for the coins they own and in what amount."""
     returned_tickers = coin_list_api_call()
 
     while True:
@@ -216,7 +210,7 @@ def input_portfolio():
 
         list_of_coins.append(user_ticker_entry)
 
-        # TODO: delete last coin entry if amount = q
+        # TODO: delete last coin entry if amount = q + check if csv is empty (take back to main menu)
         while True:
             coin_amount_entry = input('Enter number of coins owned (q to quit): ')
             try:
@@ -288,19 +282,16 @@ while True:
         if read_from_csv == 'y':
             with open('coin_holdings.csv', 'r') as csv_file:
                 lines = csv_file.readlines()
-
                 for line in lines:
                     data = line.split(',')
                     data[0] = data[0].upper()
                     data[1] = data[1].strip()
                     list_of_coins.append(data[0])
                     amounts_owned.append(data[1])
-
             csv_file.close()
 
         if read_from_csv == 'n':
             list_of_coins, amounts_owned = input_portfolio()
-
             with open('coin_holdings.csv', 'w') as csv_file:
                 writer = csv.writer(csv_file)
                 writer.writerows(zip(list_of_coins, amounts_owned))
