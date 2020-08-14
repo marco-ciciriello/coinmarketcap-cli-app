@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import sys
 
 from colorama import Back, Style
 from dotenv import load_dotenv
@@ -197,32 +198,37 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
 def input_portfolio():
     """Accept user input for the coins they own and in what amount."""
     returned_tickers = coin_list_api_call()
+    skip_user_ticker_entry = False
+    skip_coin_amount_entry = False
 
-    while True:
+    while True and skip_user_ticker_entry is False:
         user_ticker_entry = input('Enter coin ticker (q to quit): ').upper()
-
         if user_ticker_entry.lower() == 'q':
             break
-
-        if user_ticker_entry not in returned_tickers:
+        if user_ticker_entry not in returned_tickers:  # TODO: allow user to exit with q
             while user_ticker_entry not in returned_tickers:
                 user_ticker_entry = input('Enter a valid coin ticker (q to quit): ').upper()
-
+                if user_ticker_entry.lower() == 'q':
+                    skip_user_ticker_entry = True
+                    skip_coin_amount_entry = True
+                    break
         list_of_coins.append(user_ticker_entry)
+        if skip_coin_amount_entry is True:
+            del list_of_coins[-1]
 
-        # TODO: delete last coin entry if amount = q + check if csv is empty (take back to main menu)
-        while True:
-            coin_amount_entry = input('Enter number of coins owned (q to quit): ')
-            try:
-                val = float(coin_amount_entry)
-                if val < 0:
-                    print("Enter a positive number")
-                    continue
-                break
-            except ValueError:
-                print("Invalid entry. Enter a positive number")
-
-        amounts_owned.append(coin_amount_entry)
+        # TODO: check if csv is empty (take back to y/n menu)
+        if skip_coin_amount_entry is False:
+            while True:
+                coin_amount_entry = input('Enter number of coins owned (q to quit): ')
+                try:
+                    val = float(coin_amount_entry)
+                    if val < 0:
+                        print('Number of coins must be positive')
+                        continue
+                    break
+                except ValueError:
+                    print('Invalid entry. Enter a positive number')
+            amounts_owned.append(coin_amount_entry)
 
     return list_of_coins, amounts_owned
 
@@ -233,7 +239,7 @@ def prompt_user(input):
     new_selection = input('Make another selection? (y/n): ').lower().strip()
 
     if new_selection == 'n':
-        exit()
+        sys.exit("'n' selected. Quitting program...")
     elif new_selection not in valid:
         print()
         print('Please enter a valid input (y/n)')
@@ -249,7 +255,7 @@ while True:
     print('1 - Top 100 by market cap')
     print('2 - Top 100 by 24 hour price change')
     print('3 - Top 100 by 24 hour volume')
-    print('4 - My portfolio')  # TODO: ask if user wants to create fresh pf or import from csv + create export to csv functionality
+    print('4 - My portfolio')
     print('5 - Change currency')
     print('0 - Exit')
     print()
@@ -318,6 +324,7 @@ while True:
         convert = input('Enter currency ticker: ')  # TODO: add full CMC ISO 8601 currency support
 
     if user_choice == '0':
+        print("'0' selected. Quitting program...")
         break
 
     prompt_user(input)
