@@ -217,6 +217,7 @@ def input_portfolio():
         if skip_coin_amount_entry is True:
             del list_of_coins[-1]
 
+        # TODO: allow user to quit with q - remove last entries from list_of_coins and amounts_owned
         if skip_coin_amount_entry is False:
             while True:
                 coin_amount_entry = input('Enter number of coins owned (q to quit): ')
