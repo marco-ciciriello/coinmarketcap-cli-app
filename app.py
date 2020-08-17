@@ -32,6 +32,18 @@ def coin_list_api_call():
     return coin_symbols
 
 
+def fiat_currency_api_call():
+    """Make API call to retrieve list of all active fiat currencies using /v1/fiat/map endpoint."""
+    url = 'https://pro-api.coinmarketcap.com/v1/fiat/map'
+    parameters = {}
+    session = Session()
+    session.headers.update(headers)
+    response = session.get(url, params=parameters)
+    data = json.loads(response.text)
+    fiat_currency_symbols = ([d['symbol'] for d in data['data']])
+    return fiat_currency_symbols
+
+
 def rankings_api_call(selection):
     """Make API call for rankings options using /v1/cryptocurrency/listings/latest endpoint."""
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
@@ -202,7 +214,7 @@ def input_portfolio():
     skip_coin_amount_entry = False
 
     while True and skip_user_ticker_entry is False:
-        user_ticker_entry = input('Enter coin ticker (q to quit): ').upper().strip()
+        user_ticker_entry = input('Enter coin ticker (q to quit): ').strip().upper()
         if user_ticker_entry.lower() == 'q':
             break
         if user_ticker_entry not in returned_tickers:
@@ -338,7 +350,12 @@ while True:
             print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
 
     if user_choice == '5':
-        convert = input('Enter currency ticker: ')  # TODO: add full CMC ISO 8601 fiat currency support
+        returned_fiat_currencies = fiat_currency_api_call()
+        convert = input('Enter fiat currency ticker (q to quit): ').strip().upper()
+        while convert not in returned_fiat_currencies:
+            convert = input('Enter a valid fiat currency ticker (q to quit): ').upper().strip()
+            if convert.lower() == 'q':
+                break
 
     if user_choice == '0':
         print("'0' selected. Quitting program...")
