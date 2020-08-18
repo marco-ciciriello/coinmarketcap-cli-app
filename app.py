@@ -299,55 +299,62 @@ while True:
 
     # TODO: move this into a function
     if user_choice == '4':
+        user_portfolio_choices = ['y', 'n']
         skip_portfolio_construction = False
         list_of_coins = []
         amounts_owned = []
         read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
 
-        # TODO: handle for if CSV is empty or in wrong format + add validation for if not in y/n
-        if read_from_csv == 'y':
-            if os.path.isfile('./coin_holdings.csv') is True:
-                with open('coin_holdings.csv', 'r') as csv_file:
-                    lines = csv_file.readlines()
-                    for line in lines:
-                        data = line.split(',')
-                        data[0] = data[0].upper()
-                        data[1] = data[1].strip()
-                        list_of_coins.append(data[0])
-                        amounts_owned.append(data[1])
-                csv_file.close()
-            else:
-                skip_portfolio_construction = True
-                print('No coin_holdings.csv file found...creating new empty coin_holdings.csv file')
+        while True:
+            while read_from_csv not in user_portfolio_choices:
+                read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
+
+            # TODO: handle for if CSV is empty or in wrong format
+            if read_from_csv == 'y':
+                if os.path.isfile('./coin_holdings.csv') is True:
+                    with open('coin_holdings.csv', 'r') as csv_file:
+                        lines = csv_file.readlines()
+                        for line in lines:
+                            data = line.split(',')
+                            data[0] = data[0].upper()
+                            data[1] = data[1].strip()
+                            list_of_coins.append(data[0])
+                            amounts_owned.append(data[1])
+                    csv_file.close()
+                else:
+                    skip_portfolio_construction = True
+                    print('No coin_holdings.csv file found...creating new empty coin_holdings.csv file')
+                    with open('coin_holdings.csv', 'w') as csv_file:
+                        pass
+                    csv_file.close()
+                    print('Please make another selection')
+
+            if read_from_csv == 'n':
+                list_of_coins, amounts_owned = input_portfolio()
                 with open('coin_holdings.csv', 'w') as csv_file:
-                    pass
+                    writer = csv.writer(csv_file)
+                    writer.writerows(zip(list_of_coins, amounts_owned))
+                print('Saving to coin_holdings.csv...')
+                print()
                 csv_file.close()
-                print('Please make another selection')
 
-        if read_from_csv == 'n':
-            list_of_coins, amounts_owned = input_portfolio()
-            with open('coin_holdings.csv', 'w') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerows(zip(list_of_coins, amounts_owned))
-            print('Saving to coin_holdings.csv...')
-            print()
-            csv_file.close()
+            if skip_portfolio_construction is False:
+                coin_holdings = dict(zip(list_of_coins, amounts_owned))
+                portfolio_api_call(list_of_coins)
+                coin, parameters_returned, currencies_returned = portfolio_api_call(list_of_coins)
+                portfolio_table = PrettyTable(['Asset',
+                                               'Amount Owned',
+                                               'Value (' + parameters_returned['convert'] + ')',
+                                               'Price (' + parameters_returned['convert'] + ')',
+                                               'Hourly Change',
+                                               'Daily Change',
+                                               'Weekly Change'])
+                portfolio_table, portfolio_value = populate_portfolio_table(parameters_returned, currencies_returned,
+                                                                            portfolio_table, coin_holdings)
+                print(portfolio_table)
+                print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
 
-        if skip_portfolio_construction is False:
-            coin_holdings = dict(zip(list_of_coins, amounts_owned))
-            portfolio_api_call(list_of_coins)
-            coin, parameters_returned, currencies_returned = portfolio_api_call(list_of_coins)
-            portfolio_table = PrettyTable(['Asset',
-                                           'Amount Owned',
-                                           'Value (' + parameters_returned['convert'] + ')',
-                                           'Price (' + parameters_returned['convert'] + ')',
-                                           'Hourly Change',
-                                           'Daily Change',
-                                           'Weekly Change'])
-            portfolio_table, portfolio_value = populate_portfolio_table(parameters_returned, currencies_returned,
-                                                                        portfolio_table, coin_holdings)
-            print(portfolio_table)
-            print('Total Portfolio Value (' + convert + '): ' + Back.GREEN + portfolio_value + Style.RESET_ALL)
+            break
 
     if user_choice == '5':
         returned_fiat_currencies = fiat_currency_api_call()
