@@ -16,7 +16,8 @@ This is the portfolio construction option (4) - coins can either be entered manu
 
 ## Configuring your API key
 
-To configure your CoinMarketCap API key, create a .env file in the project directory and write `API_KEY='{YOUR API KEY}'`.
+To configure your CoinMarketCap API key, create a .env file in the project directory and enter `API_KEY='{YOUR API KEY}'`. 
+If you have not already done so, you will have to navigate to coinmarketcap.com/api and create a free Developer Account to obtain your API key.
 
 ## Dependencies
 
