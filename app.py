@@ -311,7 +311,7 @@ while True:
 
             # TODO: handle for if CSV is empty or in wrong format
             if read_from_csv == 'y':
-                if os.path.isfile('./coin_holdings.csv') is True:
+                if os.path.isfile('./coin_holdings.csv') is True and os.path.getsize('./coin_holdings.csv') > 0:
                     with open('coin_holdings.csv', 'r') as csv_file:
                         lines = csv_file.readlines()
                         for line in lines:
