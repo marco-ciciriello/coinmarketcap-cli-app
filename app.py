@@ -91,6 +91,7 @@ def portfolio_api_call(list_of_coins):
 
 def populate_rankings_table(parameters, currencies, table):
     """Insert rows into rankings table for returned currencies."""
+
     for currency in currencies:
         quotes = currency['quote'][parameters['convert']]
         rank = currency['cmc_rank']
@@ -110,33 +111,21 @@ def populate_rankings_table(parameters, currencies, table):
             market_cap = int(quotes['market_cap'])
         market_cap_string = '{:,}'.format(market_cap)
 
-        # TODO: move this code into a separate function and call function here
-        if quotes['percent_change_1h'] is None:
-            hour_change = 0
-        else:
-            hour_change = round(quotes['percent_change_1h'], 2)
-            if hour_change >= 0:
-                hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
-            else:
-                hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
+        hour_change, day_change, week_change = quotes['percent_change_1h'], quotes['percent_change_24h'], quotes['percent_change_7d']
+        delta_dict = {'hour_change': hour_change,
+                      'day_change': day_change,
+                      'week_change': week_change,
+                      }
 
-        if quotes['percent_change_24h'] is None:
-            day_change = 0
-        else:
-            day_change = round(quotes['percent_change_24h'], 2)
-            if day_change >= 0:
-                day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
+        for delta in delta_dict:
+            if delta_dict[delta] is None:
+                delta_dict[delta] = 0
             else:
-                day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
-
-        if quotes['percent_change_7d'] is None:
-            week_change = 0
-        else:
-            week_change = round(quotes['percent_change_7d'], 2)
-            if week_change >= 0:
-                week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
-            else:
-                week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
+                delta_dict[delta] = round(delta_dict[delta], 2)
+                if delta_dict[delta] >= 0:
+                    delta_dict[delta] = Back.GREEN + str(delta_dict[delta]) + '%' + Style.RESET_ALL
+                else:
+                    delta_dict[delta] = Back.RED + str(delta_dict[delta]) + '%' + Style.RESET_ALL
 
         # TODO: create create_table function and put this functionality there
         table.add_row([rank,
@@ -144,9 +133,9 @@ def populate_rankings_table(parameters, currencies, table):
                        str(price),
                        market_cap_string,
                        volume_string,
-                       str(hour_change),
-                       str(day_change),
-                       str(week_change)
+                       str(delta_dict['hour_change']),
+                       str(delta_dict['day_change']),
+                       str(delta_dict['week_change']),
                        ])
     return table
 
@@ -161,33 +150,21 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
         ticker = currency['symbol']
         price = round(float(quotes['price']), 3)
 
-        # TODO: move this code into a separate function and call function here
-        if quotes['percent_change_1h'] is None:
-            hour_change = 0
-        else:
-            hour_change = round(quotes['percent_change_1h'], 2)
-            if hour_change >= 0:
-                hour_change = Back.GREEN + str(hour_change) + '%' + Style.RESET_ALL
-            else:
-                hour_change = Back.RED + str(hour_change) + '%' + Style.RESET_ALL
+        hour_change, day_change, week_change = quotes['percent_change_1h'], quotes['percent_change_24h'], quotes['percent_change_7d']
+        delta_dict = {'hour_change': hour_change,
+                      'day_change': day_change,
+                      'week_change': week_change,
+                      }
 
-        if quotes['percent_change_24h'] is None:
-            day_change = 0
-        else:
-            day_change = round(quotes['percent_change_24h'], 2)
-            if day_change >= 0:
-                day_change = Back.GREEN + str(day_change) + '%' + Style.RESET_ALL
+        for delta in delta_dict:
+            if delta_dict[delta] is None:
+                delta_dict[delta] = 0
             else:
-                day_change = Back.RED + str(day_change) + '%' + Style.RESET_ALL
-
-        if quotes['percent_change_7d'] is None:
-            week_change = 0
-        else:
-            week_change = round(quotes['percent_change_7d'], 2)
-            if week_change >= 0:
-                week_change = Back.GREEN + str(week_change) + '%' + Style.RESET_ALL
-            else:
-                week_change = Back.RED + str(week_change) + '%' + Style.RESET_ALL
+                delta_dict[delta] = round(delta_dict[delta], 2)
+                if delta_dict[delta] >= 0:
+                    delta_dict[delta] = Back.GREEN + str(delta_dict[delta]) + '%' + Style.RESET_ALL
+                else:
+                    delta_dict[delta] = Back.RED + str(delta_dict[delta]) + '%' + Style.RESET_ALL
 
         amount_owned = coin_holdings.get(number_of_coins)
         value = float(price) * float(amount_owned)
@@ -199,15 +176,14 @@ def populate_portfolio_table(parameters, currencies, table, amount_owned):
                        amount_owned,
                        value_string,
                        str(price),
-                       str(hour_change),
-                       str(day_change),
-                       str(week_change)
+                       str(delta_dict['hour_change']),
+                       str(delta_dict['day_change']),
+                       str(delta_dict['week_change']),
                        ])
     return table, portfolio_value_string
 
 
 def input_portfolio():
-    # TODO: check if csv is empty (take back to y/n menu)
     """Accept user input for the coins they own and in what amount."""
     returned_tickers = coin_list_api_call()
     skip_user_ticker_entry = False
@@ -309,7 +285,7 @@ while True:
             while read_from_csv not in user_portfolio_choices:
                 read_from_csv = input('Read from CSV? (y/n): ').lower().strip()
 
-            # TODO: handle for if CSV is empty or in wrong format
+            # TODO: handle for if CSV is in wrong format
             if read_from_csv == 'y':
                 if os.path.isfile('./coin_holdings.csv') is True and os.path.getsize('./coin_holdings.csv') > 0:
                     with open('coin_holdings.csv', 'r') as csv_file:
