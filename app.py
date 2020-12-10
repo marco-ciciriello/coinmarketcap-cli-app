@@ -28,7 +28,7 @@ def coin_list_api_call():
     session.headers.update(headers)
     response = session.get(url, params=parameters)
     data = json.loads(response.text)
-    coin_symbols = ([d['symbol'] for d in data['data']])
+    coin_symbols = [d['symbol'] for d in data['data']]
     return coin_symbols
 
 
@@ -40,7 +40,7 @@ def fiat_currency_api_call():
     session.headers.update(headers)
     response = session.get(url, params=parameters)
     data = json.loads(response.text)
-    fiat_currency_symbols = ([d['symbol'] for d in data['data']])
+    fiat_currency_symbols = [d['symbol'] for d in data['data']]
     return fiat_currency_symbols
 
 
@@ -273,7 +273,6 @@ while True:
                                       'Weekly Change'])
         print(populate_rankings_table(parameters_returned, currencies_returned, rankings_table))
 
-    # TODO: move this into a function
     if user_choice == '4':
         user_portfolio_choices = ['y', 'n']
         skip_portfolio_construction = False
